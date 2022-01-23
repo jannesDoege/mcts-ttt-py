@@ -8,7 +8,7 @@ class TicTacToe:
     def get_actions(self):
         arrs = (self.field == 0).nonzero()
         actions = [(a, b) for a, b in zip(arrs[0], arrs[1])]
-        actions = [] if self.get_done() else actions
+        actions = [] if self.get_done()[0] else actions
         return actions, self.active_player
     
     def get_field(self):
@@ -19,7 +19,7 @@ class TicTacToe:
 
     def get_done(self):
         done = False
-        r = 1
+        tie = False
 
         quer = [[], []]
         for i, j in zip(range(3), range(2, -1, -1)):
@@ -27,15 +27,15 @@ class TicTacToe:
                 done = True if (f[i][0] == f[i][1] and f[i][1] == f[i][2]) and(f[i][0] == 1 or f[i][0] == 2) else done
             quer[0].append(self.field[i][i])
             quer[1].append(self.field[j][j])
-
+        
         for i in range(2):
             done = True if (not np.any(np.array(quer[i]!=quer[i][0]))) and (quer[i][0] == 1 or quer[i][0] == 2) else done
         
-        if (self.field == 0).any():
+        if not (self.field == 0).any():
             done = True  
-            r = 0
+            tie = True
 
-        return done, r
+        return done, tie
 
     def update_board(self, pos, player=None):
         """
@@ -46,6 +46,7 @@ class TicTacToe:
 
         if player is None:
             player = self.active_player
+        print(self.field)
         self.field[pos[0]][pos[1]] = player
         return self.field
 
