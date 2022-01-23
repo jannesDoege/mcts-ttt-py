@@ -8,6 +8,9 @@ usefull resources:
  http://matthewdeakos.me/2018/03/10/monte-carlo-tree-search/
  https://www.youtube.com/watch?v=UXW2yZndl7U
 """
+
+# TODO problem: same memory address for env field and node 0 state
+
 C = 2
 STEPS = 10000
 
@@ -16,9 +19,14 @@ env = TicTacToe()
 game_tree = treelib.Tree()
 game_tree.create_node("0", "0", data = {"visited": 0, "total": 0, "state": np.zeros((3,3)),
                                         "player": 1, "terminal": False, "action": None})
+print(hex(id(game_tree.get_node("0").data["state"])))
 
 def get_active(active_player):
-    return 1 if active_player == 2 else 1
+    if active_player == 1:
+        player = 2 
+    elif active_player == 2:
+        player = 1
+    return player
 
 
 def selection(cur_node_id):
@@ -40,38 +48,47 @@ def selection(cur_node_id):
 
 def light_rollout(cur_node):
     env.state = cur_node.data["state"]
-    player = cur_node.data["player"]
+    print(env.get_done())
+    player = get_active(cur_node.data["player"])
     while True:
         if env.get_done()[1]: # tie
             return 0, player
         elif env.get_done()[0]:
             return 1, player
 
-        env.update_board(np.random.choice(env.get_actions()), player)
+        acts = env.get_actions()[0]
+        idx = np.random.randint(0, len(acts))
+        env.update_board(acts[idx], player)
         player = get_active(player)
 
 
-def recursive_update(node, r, p):
+def recursive_update(node, r, win_p):
     node.data["visited"] += 1
-    node.data["total"] += r if node.data["player"] == p else 0
+    node.data["total"] += r if node.data["player"] == win_p else 0
     if not node.is_root():
-        recursive_update(game_tree.get_node(node.bpointer), r, p)
+        recursive_update(game_tree.get_node(node.predecessor(game_tree.identifier)), r, win_p)
 
 def train():
-
     id_counter = 1
+
     for _ in range(STEPS):
         current = game_tree.get_node("0")
+        leaf = False
         while not leaf:
             if current.data["terminal"]:
                 break
             leaf = len(game_tree.children(current.identifier)) == 0
             if not leaf:
+                game_tree.show()
                 current = selection(current.identifier) 
+
 
         if current.data["visited"] == 0:
             r, p = light_rollout(current)
             recursive_update(current, r, p)
+            print(current.data)
+            print("hey")
+
         else:
             if current.data["terminal"]:
                 current.data["visited"] += 1
@@ -81,13 +98,18 @@ def train():
                 recursive_update(current, val, p)
 
             env.field = current.data["state"]
-            acts = env.get_actions()
+            acts = env.get_actions()[0]
+            
             for act in acts:
+                env.field = current.data["state"]
+                print(hex(id(env.field)))                
+                print(hex(id(current.data["state"])))
+                print(env.field)
                 player = get_active(current.data["player"])
-                obs = env.update_board(act, player=player)
+                obs = np.array(env.update_board(act, player=player))
                 terminal, _ = env.get_done()
                 name = f"{id_counter}_{act}"
-                game_tree.create_node(name, name, current.identifier, data= {"visited": 0, "total": 0,
+                game_tree.create_node(name, name, parent=current.identifier, data= {"visited": 0, "total": 0,
                     "state": obs, "player": player, "terminal": terminal, "action": act})
                 id_counter += 1
 
@@ -95,9 +117,11 @@ def train():
             c = childs[0]
             r, p = light_rollout(c)
             recursive_update(c, r, p)
+    
+    game_tree.save2file("trained")
 
-
-
+if __name__ == "__main__":
+    train()
 
 
 
