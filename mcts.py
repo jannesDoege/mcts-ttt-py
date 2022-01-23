@@ -9,7 +9,7 @@ usefull resources:
  https://www.youtube.com/watch?v=UXW2yZndl7U
 """
 
-# TODO problem: same memory address for env field and node 0 state
+# TODO problem: same memory address for env field and node 0 state in train loop -> not at beginning
 
 C = 2
 STEPS = 10000
@@ -20,6 +20,7 @@ game_tree = treelib.Tree()
 game_tree.create_node("0", "0", data = {"visited": 0, "total": 0, "state": np.zeros((3,3)),
                                         "player": 1, "terminal": False, "action": None})
 print(hex(id(game_tree.get_node("0").data["state"])))
+print(hex(id(env.field)))
 
 def get_active(active_player):
     if active_player == 1:
@@ -28,7 +29,7 @@ def get_active(active_player):
         player = 1
     return player
 
-
+# TODO nach np.array viele komische nullen
 def selection(cur_node_id):
     children = game_tree.children(cur_node_id)
     cur_data = game_tree.get_node(cur_node_id).data
@@ -92,18 +93,16 @@ def train():
         else:
             if current.data["terminal"]:
                 current.data["visited"] += 1
-                env.field = current.data["state"]
+                env.field = np.array(current.data["state"])
                 val = 1 if env.get_done()[1] else 0
                 p = current.data["player"]
                 recursive_update(current, val, p)
 
-            env.field = current.data["state"]
+            env.field = np.array(current.data["state"])
             acts = env.get_actions()[0]
             
             for act in acts:
-                env.field = current.data["state"]
-                print(hex(id(env.field)))                
-                print(hex(id(current.data["state"])))
+                env.field = np.array(current.data["state"])
                 print(env.field)
                 player = get_active(current.data["player"])
                 obs = np.array(env.update_board(act, player=player))
