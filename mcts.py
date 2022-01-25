@@ -19,8 +19,6 @@ env = TicTacToe()
 game_tree = treelib.Tree()
 game_tree.create_node("0", "0", data = {"visited": 0, "total": 0, "state": np.zeros((3,3)),
                                         "player": 1, "terminal": False, "action": None})
-print(hex(id(game_tree.get_node("0").data["state"])))
-print(hex(id(env.field)))
 
 def get_active(active_player):
     if active_player == 1:
@@ -49,7 +47,6 @@ def selection(cur_node_id):
 
 def light_rollout(cur_node):
     env.state = cur_node.data["state"]
-    print(env.get_done())
     player = get_active(cur_node.data["player"])
     while True:
         if env.get_done()[1]: # tie
@@ -87,8 +84,6 @@ def train():
         if current.data["visited"] == 0:
             r, p = light_rollout(current)
             recursive_update(current, r, p)
-            print(current.data)
-            print("hey")
 
         else:
             if current.data["terminal"]:
@@ -103,7 +98,6 @@ def train():
             
             for act in acts:
                 env.field = np.array(current.data["state"])
-                print(env.field)
                 player = get_active(current.data["player"])
                 obs = np.array(env.update_board(act, player=player))
                 terminal, _ = env.get_done()
@@ -113,6 +107,7 @@ def train():
                 id_counter += 1
 
             childs = game_tree.children(current.identifier)
+            print(childs)
             c = childs[0]
             r, p = light_rollout(c)
             recursive_update(c, r, p)
