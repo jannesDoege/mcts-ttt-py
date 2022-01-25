@@ -9,10 +9,8 @@ usefull resources:
  https://www.youtube.com/watch?v=UXW2yZndl7U
 """
 
-# TODO problem: same memory address for env field and node 0 state in train loop -> not at beginning
-
 C = 2
-STEPS = 10000
+STEPS = 1000000
 
 env = TicTacToe()
 
@@ -27,7 +25,6 @@ def get_active(active_player):
         player = 1
     return player
 
-# TODO nach np.array viele komische nullen
 def selection(cur_node_id):
     children = game_tree.children(cur_node_id)
     cur_data = game_tree.get_node(cur_node_id).data
@@ -37,8 +34,7 @@ def selection(cur_node_id):
 
     best = None
     for c in children:
-        # avoid 0 div
-        ucb1 = avg_v + C * math.sqrt(l_vis / (game_tree.get_node(c).data["visited"] + 0.0000001)) 
+        ucb1 = avg_v + C * math.sqrt(l_vis / (c.data["visited"] + 0.0000001)) # avoid 0 div
         if best is None or ucb1 > best[0]:
             best = (ucb1, c)
 
@@ -69,7 +65,9 @@ def recursive_update(node, r, win_p):
 def train():
     id_counter = 1
 
-    for _ in range(STEPS):
+    for st in range(STEPS):
+        if st % 10000 == 0:
+            print(f"{st} / {STEPS}")
         current = game_tree.get_node("0")
         leaf = False
         while not leaf:
@@ -77,22 +75,19 @@ def train():
                 break
             leaf = len(game_tree.children(current.identifier)) == 0
             if not leaf:
-                game_tree.show()
                 current = selection(current.identifier) 
 
 
         if current.data["visited"] == 0:
             r, p = light_rollout(current)
             recursive_update(current, r, p)
-
-        else:
-            if current.data["terminal"]:
+        elif current.data["terminal"]:
                 current.data["visited"] += 1
                 env.field = np.array(current.data["state"])
                 val = 1 if env.get_done()[1] else 0
                 p = current.data["player"]
                 recursive_update(current, val, p)
-
+        else:
             env.field = np.array(current.data["state"])
             acts = env.get_actions()[0]
             
@@ -107,12 +102,11 @@ def train():
                 id_counter += 1
 
             childs = game_tree.children(current.identifier)
-            print(childs)
             c = childs[0]
             r, p = light_rollout(c)
             recursive_update(c, r, p)
     
-    game_tree.save2file("trained")
+    game_tree.save2file("game_tree")
 
 if __name__ == "__main__":
     train()
