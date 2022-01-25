@@ -46,7 +46,6 @@ class TicTacToe:
 
         if player is None:
             player = self.active_player
-        print(self.field)
         self.field[pos[0]][pos[1]] = player
         return self.field
 
