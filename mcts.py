@@ -77,7 +77,6 @@ def train():
             if not leaf:
                 current = selection(current.identifier) 
 
-
         if current.data["visited"] == 0:
             r, p = light_rollout(current)
             recursive_update(current, r, p)
@@ -108,6 +107,7 @@ def train():
     
     game_tree.save2file("game_tree")
 
+    
 if __name__ == "__main__":
     train()
 
