@@ -4,7 +4,7 @@ from ttt_env import TicTacToe
 import math
 
 """
-usefull resources: 
+useful resources: 
  http://matthewdeakos.me/2018/03/10/monte-carlo-tree-search/
  https://www.youtube.com/watch?v=UXW2yZndl7U
 """
